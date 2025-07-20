@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 
-from src.utils.theme import APP_THEME
+from src.utils.theme import DARK_THEME
 from src.utils.database import SessionLocal
 from src.models import CustomerCompany, Product, Inventory
 from src.utils.helpers import log_action
@@ -238,77 +238,36 @@ class SaaSBillingApp(QMainWindow):
 
     def apply_styles(self):
         self.setStyleSheet(f"""
-            QMainWindow {{ background-color: {APP_THEME['bg_main']}; font-family: Roboto; }}
-            #nav-sidebar {{ background-color: {APP_THEME['bg_content']}; border-right: 1px solid {APP_THEME['border']}; }}
-            #sidebar-title {{
-                font-size: 20px;
-                font-weight: 600;
-                color: {APP_THEME['text_primary']};
-                padding-bottom: 5px;
-            }}
-            #sidebar-subtitle {{
-                font-size: 13px;
-                color: {APP_THEME['text_secondary']};
-            }}
+            QMainWindow {{ background-color: {DARK_THEME['bg_main']}; font-family: Roboto; }}
+            #nav-sidebar {{ background-color: {DARK_THEME['bg_sidebar']}; border:none; }}
+            #sidebar-title {{ font-size: 18px; font-weight: 600; color: {DARK_THEME['text_primary']}; }}
+            #sidebar-subtitle {{ font-size: 12px; color: {DARK_THEME['text_secondary']}; }}
             
             #nav-sidebar QPushButton {{
-                color: {APP_THEME['text_secondary']};
-                border: none;
-                text-align: left;
-                padding: 12px 15px;
-                border-radius: 6px;
-                font-weight: 500;
-                font-size: 15px;
-                margin: 0 5px;
+                color: {DARK_THEME['text_secondary']}; border: none; text-align: left;
+                padding: 10px 15px; border-radius: 6px; font-weight: 500; font-size: 14px;
             }}
-            #nav-sidebar QPushButton:hover {{
-                background-color: {APP_THEME['accent_blue_light_bg']};
-                color: {APP_THEME['accent_blue']};
-            }}
+            #nav-sidebar QPushButton:hover {{ background-color: {DARK_THEME['bg_hover']}; }}
             #nav-sidebar QPushButton:checked {{
-                background-color: {APP_THEME['accent_blue']};
-                color: {APP_THEME['text_white']};
+                background-color: {DARK_THEME['bg_surface']};
+                color: {DARK_THEME['accent_primary']};
                 font-weight: 600;
             }}
             
-            #top-header {{
-                background-color: {APP_THEME['bg_content']};
-                border-bottom: 1px solid {APP_THEME['border']};
-            }}
-            #header-title {{
-                font-size: 22px;
-                font-weight: 600;
-                color: {APP_THEME['text_primary']};
-            }}
-            #header-subtitle {{
-                font-size: 14px;
-                color: {APP_THEME['text_secondary']};
-            }}
+            #top-header {{ background-color: {DARK_THEME['bg_surface']}; border-bottom: 1px solid {DARK_THEME['border_main']}; }}
+            #header-title {{ font-size: 20px; font-weight: 600; color: {DARK_THEME['text_primary']}; }}
+            #header-subtitle {{ font-size: 13px; color: {DARK_THEME['text_secondary']}; }}
             
             #header-button {{
-                background-color: {APP_THEME['bg_content']};
-                color: {APP_THEME['text_secondary']};
-                border: 1px solid {APP_THEME['border']};
-                padding: 8px 18px;
-                border-radius: 6px;
-                font-weight: 500;
-                font-size: 14px;
+                background-color: transparent; color: {DARK_THEME['text_secondary']};
+                border: 1px solid {DARK_THEME['border_main']};
+                padding: 8px 16px; border-radius: 6px; font-weight: 500;
             }}
-            #header-button:hover {{
-                border-color: {APP_THEME['accent_blue']};
-                color: {APP_THEME['accent_blue']};
-            }}
+            #header-button:hover {{ border-color: {DARK_THEME['accent_primary']}; color: {DARK_THEME['accent_primary']}; }}
             
             #primary-header-button {{
-                background-color: {APP_THEME['accent_blue']};
-                color: {APP_THEME['text_white']};
-                border: none;
-                padding: 9px 20px;
-                border-radius: 6px;
-                font-weight: 600;
-                font-size: 14px;
+                background-color: {DARK_THEME['accent_primary']}; color: {DARK_THEME['text_on_accent']};
+                border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600;
             }}
-            #primary-header-button:hover {{
-                background-color: {APP_THEME['accent_blue_hover']};
-            }}
+            #primary-header-button:hover {{ background-color: {DARK_THEME['accent_hover']}; }}
         """)
