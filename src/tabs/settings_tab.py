@@ -2,7 +2,7 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
                              QPushButton, QGridLayout, QFrame, QMessageBox, QSpacerItem, QSizePolicy)
 from PyQt6.QtCore import Qt
-from src.utils.theme import DARK_THEME
+from src.utils.theme import APP_THEME
 from src.utils.database import SessionLocal
 from src.models.user import UserSettings
 from src.utils.helpers import log_action
@@ -168,9 +168,9 @@ class SettingsTab(QWidget):
             msg_box.setIcon(QMessageBox.Icon.Information)
             msg_box.setWindowTitle("Success")
             msg_box.setStyleSheet(f"""
-                QMessageBox {{ background-color: {DARK_THEME['bg_surface']}; }}
-                QLabel {{ color: {DARK_THEME['text_primary']}; }}
-                QPushButton {{ background-color: {DARK_THEME['accent_primary']}; color: {DARK_THEME['text_on_accent']}; padding: 8px 16px; border-radius: 4px; border: none; }}
+                QMessageBox {{ background-color: {APP_THEME['bg_content']}; }}
+                QLabel {{ color: {APP_THEME['text_primary']}; }}
+                QPushButton {{ background-color: {APP_THEME['accent_blue']}; color: {APP_THEME['text_white']}; padding: 8px 16px; border-radius: 4px; border: none; }}
             """)
             msg_box.exec()
 
@@ -178,28 +178,28 @@ class SettingsTab(QWidget):
         self.setStyleSheet(f"""
             SettingsTab {{ font-family: Roboto; }}
             QFrame#content-card {{
-                background-color: {DARK_THEME['bg_surface']};
-                border: 1px solid {DARK_THEME['border_main']};
+                background-color: {APP_THEME['bg_content']};
+                border: 1px solid {APP_THEME['border']};
                 border-radius: 8px;
                 padding: 20px;
             }}
             QLabel#card-title {{
                 font-size: 18px;
                 font-weight: 600;
-                color: {DARK_THEME['text_primary']};
+                color: {APP_THEME['text_primary']};
                 padding-bottom: 5px;
             }}
             QLabel#card-subtitle {{
                 font-size: 13px;
-                color: {DARK_THEME['text_secondary']};
+                color: {APP_THEME['text_secondary']};
                 padding-bottom: 10px;
             }}
             QPushButton#primary-button {{
-                background-color: {DARK_THEME['accent_primary']};
-                color: {DARK_THEME['text_on_accent']};
+                background-color: {APP_THEME['accent_blue']};
+                color: {APP_THEME['text_white']};
                 border: none; border-radius: 6px; padding: 10px; font-weight: 600;
             }}
             QPushButton#primary-button:hover {{
-                background-color: {DARK_THEME['accent_hover']};
+                background-color: {APP_THEME['accent_blue_hover']};
             }}
         """)

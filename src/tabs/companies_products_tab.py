@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QLabel, QListWid
                              QHeaderView, QMenu, QMessageBox, QCheckBox, QLineEdit)
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt
-from src.utils.theme import DARK_THEME
+from src.utils.theme import APP_THEME
 from src.utils.database import SessionLocal
 from src.models import CustomerCompany, Product, Inventory
 from src.utils.dialogs import CompanyDialog, ProductDialog
@@ -42,7 +42,7 @@ class CompaniesProductsTab(QWidget):
         left_layout = QVBoxLayout(left_panel)
         left_panel.setMaximumWidth(400)
         left_layout.setContentsMargins(0,0,0,0)
-        
+
         company_header = QFrame()
         company_header.setObjectName("panel-header")
         company_header_layout = QHBoxLayout(company_header)
@@ -57,7 +57,7 @@ class CompaniesProductsTab(QWidget):
         add_company_btn.setObjectName("add-button")
         add_company_btn.clicked.connect(self.show_add_company_dialog)
         company_header_layout.addWidget(add_company_btn)
-        
+
         left_layout.addWidget(company_header)
 
         search_frame = QFrame()
@@ -136,7 +136,6 @@ class CompaniesProductsTab(QWidget):
             item_widget = SelectableListItemWidget(company.name)
             item_widget.checkbox.stateChanged.connect(self.update_delete_button_state)
             menu = QMenu(self)
-            menu.setStyleSheet(f"background-color: {DARK_THEME['bg_input']}; color: {DARK_THEME['text_primary']};")
             edit_action = QAction("Edit Details", menu)
             edit_action.triggered.connect(lambda chk, c=company: self.show_edit_company_dialog(c))
             delete_action = QAction("Delete Company", menu)
@@ -159,7 +158,7 @@ class CompaniesProductsTab(QWidget):
             widget = self.company_list.itemWidget(item)
             widget.setProperty("selected", item.isSelected())
             widget.style().polish(widget)
-    
+
     def on_company_selected(self, item):
         company_id = item.data(Qt.ItemDataRole.UserRole)
         self.selected_company = self.db_session.query(CustomerCompany).get(company_id)
@@ -169,7 +168,7 @@ class CompaniesProductsTab(QWidget):
             self.product_stack.setCurrentIndex(1)
             self.add_product_btn.setEnabled(True)
         self.update_delete_button_state()
-            
+
     def load_products_for_company(self):
         self.product_table.setRowCount(0)
         if not self.selected_company: return
@@ -184,7 +183,7 @@ class CompaniesProductsTab(QWidget):
             self.product_table.setItem(row_pos, 1, QTableWidgetItem(product.name))
             self.product_table.setItem(row_pos, 2, QTableWidgetItem(f"₹{product.price:,.2f}"))
             actions_btn = QPushButton("⋮"); actions_btn.setObjectName("menu-button")
-            menu = QMenu(self); menu.setStyleSheet(f"background-color: {DARK_THEME['bg_input']}; color: {DARK_THEME['text_primary']};")
+            menu = QMenu(self)
             edit_action = QAction("Edit", menu); edit_action.triggered.connect(lambda chk, p=product: self.show_edit_product_dialog(p))
             delete_action = QAction("Delete", menu); delete_action.triggered.connect(lambda chk, p=product: self.handle_delete_product(p))
             menu.addAction(edit_action); menu.addAction(delete_action)
@@ -254,7 +253,7 @@ class CompaniesProductsTab(QWidget):
                 self.db_session.delete(company)
             self.db_session.commit(); self.load_companies()
             if self.selected_company and self.selected_company.id in company_ids_to_delete: self.product_stack.setCurrentIndex(0)
-    
+
     def show_add_product_dialog(self):
         if not self.selected_company: return
         dialog = ProductDialog(parent=self)
@@ -266,7 +265,7 @@ class CompaniesProductsTab(QWidget):
                 self.db_session.add(new_product); self.db_session.add(new_inventory); self.db_session.flush()
                 log_action(self.db_session, "CREATE", "Product", new_product.id, f"Product '{new_product.name}' created for company '{self.selected_company.name}'.")
                 self.db_session.commit(); self.load_products_for_company()
-    
+
     def show_edit_product_dialog(self, product):
         dialog = ProductDialog(product=product, parent=self)
         if dialog.exec():
@@ -294,28 +293,118 @@ class CompaniesProductsTab(QWidget):
     def apply_styles(self):
         self.setStyleSheet(f"""
             QWidget {{ font-family: Roboto; }}
-            QFrame#left-panel {{ background-color: {DARK_THEME['bg_surface']}; }}
-            QFrame#panel-header {{ border-bottom: 1px solid {DARK_THEME['border_main']}; padding: 10px 15px; }}
+            QFrame#left-panel {{ background-color: {APP_THEME['bg_content']}; }}
+            QFrame#panel-header {{
+                border-bottom: 1px solid {APP_THEME['border']};
+                padding: 10px 15px;
+            }}
             QFrame#search-frame {{ padding: 10px; }}
-            #panel-header QLabel {{ font-size: 16px; font-weight: 600; color: {DARK_THEME['text_primary']}; }}
-            #placeholder-label {{ color: {DARK_THEME['text_secondary']}; font-size: 16px; }}
+            #panel-header QLabel {{
+                font-size: 16px;
+                font-weight: 600;
+                color: {APP_THEME['text_primary']};
+            }}
+            #placeholder-label {{
+                color: {APP_THEME['text_secondary']};
+                font-size: 16px;
+            }}
             QListWidget {{ border: none; }}
-            SelectableListItemWidget {{ border-radius: 8px; margin: 2px 8px; border: 1px solid transparent; }}
-            SelectableListItemWidget QLabel {{ color: {DARK_THEME['text_primary']}; }}
-            SelectableListItemWidget[selected=true] {{ background-color: {DARK_THEME['bg_hover']}; border: 1px solid {DARK_THEME['accent_primary']}; }}
-            #add-button, #menu-button {{ background-color: transparent; color: {DARK_THEME['text_secondary']}; border: none; font-size: 18px; font-weight: bold; max-width: 30px; border-radius: 6px; }}
-            #add-button:hover, #menu-button:hover {{ color: {DARK_THEME['accent_primary']}; }}
-            #primary-button {{ background-color: {DARK_THEME['accent_primary']}; color: {DARK_THEME['text_on_accent']}; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; }}
-            #primary-button:hover {{ background-color: {DARK_THEME['accent_hover']}; }}
-            #primary-button:disabled {{ background-color: {DARK_THEME['bg_hover']}; color: {DARK_THEME['text_secondary']}; }}
-            #destructive-button {{ background-color: transparent; color: {DARK_THEME['accent_danger']}; border: 1px solid {DARK_THEME['accent_danger']}; padding: 5px 10px; border-radius: 6px; font-weight: 600; }}
-            #destructive-button:hover {{ background-color: {DARK_THEME['accent_danger_hover']}; color: {DARK_THEME['text_on_accent']}; border-color: {DARK_THEME['accent_danger_hover']}; }}
-            #destructive-button:disabled {{ color: {DARK_THEME['text_secondary']}; border-color: {DARK_THEME['text_secondary']}; background-color: transparent; }}
-            QTableWidget {{ background-color: transparent; gridline-color: {DARK_THEME['border_main']}; border: none; }}
-            QHeaderView::section {{ background-color: {DARK_THEME['bg_sidebar']}; color: {DARK_THEME['text_secondary']}; padding: 10px; border: none; font-weight: 600; }}
-            QTableWidget::item {{ padding: 10px; border-bottom: 1px solid {DARK_THEME['border_main']}; }}
-            QTableWidget::item:selected {{ background-color: {DARK_THEME['accent_hover']}; color: {DARK_THEME['text_primary']}; }}
-            QCheckBox::indicator {{ width: 18px; height: 18px; border-radius: 4px; border: 1px solid {DARK_THEME['border_main']}; }}
-            QCheckBox::indicator:hover {{ border-color: {DARK_THEME['accent_primary']}; }}
-            QCheckBox::indicator:checked {{ background-color: {DARK_THEME['accent_primary']}; border-color: {DARK_THEME['accent_primary']}; }}
+            SelectableListItemWidget {{
+                border-radius: 6px;
+                margin: 2px 10px;
+                border: 1px solid transparent;
+            }}
+            SelectableListItemWidget QLabel {{ color: {APP_THEME['text_primary']}; font-size: 14px; }}
+            SelectableListItemWidget[selected=true] {{
+                background-color: {APP_THEME['accent_blue_light_bg']};
+                border-left: 3px solid {APP_THEME['accent_blue']};
+            }}
+            SelectableListItemWidget[selected=true] QLabel {{
+                color: {APP_THEME['accent_blue']};
+                font-weight: 600;
+            }}
+            #add-button, #menu-button {{
+                background-color: transparent;
+                color: {APP_THEME['text_secondary']};
+                border: none;
+                font-size: 18px;
+                font-weight: bold;
+                max-width: 30px;
+                border-radius: 6px;
+            }}
+            #add-button:hover, #menu-button:hover {{
+                color: {APP_THEME['accent_blue']};
+            }}
+            #primary-button {{
+                background-color: {APP_THEME['accent_blue']};
+                color: {APP_THEME['text_white']};
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 14px;
+            }}
+            #primary-button:hover {{
+                background-color: {APP_THEME['accent_blue_hover']};
+            }}
+            #primary-button:disabled {{
+                background-color: {APP_THEME['bg_main']};
+                color: {APP_THEME['text_secondary']};
+            }}
+            #destructive-button {{
+                background-color: transparent;
+                color: {APP_THEME['danger']};
+                border: 1px solid {APP_THEME['danger']};
+                padding: 5px 10px;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+            }}
+            #destructive-button:hover {{
+                background-color: {APP_THEME['danger_hover']};
+                color: {APP_THEME['text_white']};
+                border-color: {APP_THEME['danger_hover']};
+            }}
+            #destructive-button:disabled {{
+                color: {APP_THEME['text_secondary']};
+                border-color: {APP_THEME['border']};
+                background-color: transparent;
+            }}
+            QTableWidget {{
+                background-color: transparent;
+                gridline-color: {APP_THEME['border']};
+                border: none;
+            }}
+            QHeaderView::section {{
+                background-color: {APP_THEME['bg_main']};
+                color: {APP_THEME['text_secondary']};
+                padding: 10px;
+                border: none;
+                font-weight: 600;
+                font-size: 13px;
+            }}
+            QTableWidget::item {{
+                padding: 12px;
+                border-bottom: 1px solid {APP_THEME['border']};
+                color: {APP_THEME['text_secondary']};
+                font-size: 14px;
+            }}
+            QTableWidget::item:selected {{
+                background-color: {APP_THEME['accent_blue_light_bg']};
+                color: {APP_THEME['text_primary']};
+            }}
+            QCheckBox::indicator {{
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                border: 1px solid {APP_THEME['border']};
+            }}
+            QCheckBox::indicator:hover {{
+                border-color: {APP_THEME['accent_blue']};
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: {APP_THEME['accent_blue']};
+                border-color: {APP_THEME['accent_blue']};
+                image: url(resources/icons/check.svg);
+            }}
         """)

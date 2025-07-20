@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from src.utils.database import SessionLocal
 from src.models import CustomerCompany, Product, Inventory, InventoryHistory
 from src.utils.dialogs import StockAdjustmentDialog
-from src.utils.theme import DARK_THEME
+from src.utils.theme import APP_THEME
 from src.utils.helpers import log_action
 
 class InventoryTab(QWidget):
@@ -138,13 +138,59 @@ class InventoryTab(QWidget):
 
     def apply_styles(self):
         self.setStyleSheet(f"""
-            QFrame#stat-card {{ background-color: {DARK_THEME['bg_surface']}; border: 1px solid {DARK_THEME['border_main']}; border-radius: 8px; padding: 15px; }}
-            QLabel#stat-title {{ color: {DARK_THEME['text_secondary']}; font-size: 13px; font-weight: 500; }}
-            QLabel#stat-value {{ color: {DARK_THEME['text_primary']}; font-size: 24px; font-weight: 600; }}
-            QFrame#panel-header {{ border-bottom: 1px solid {DARK_THEME['border_main']}; padding: 10px; }}
-            QTableWidget {{ background-color: transparent; gridline-color: {DARK_THEME['border_main']}; border: none; }}
-            QHeaderView::section {{ background-color: {DARK_THEME['bg_sidebar']}; color: {DARK_THEME['text_secondary']}; padding: 10px; border: none; font-weight: 600; }}
-            QTableWidget::item {{ padding: 10px; border-bottom: 1px solid {DARK_THEME['border_main']}; color: {DARK_THEME['text_primary']}; }}
-            QPushButton#secondary-button {{ background-color: transparent; color: {DARK_THEME['text_secondary']}; border: 1px solid {DARK_THEME['border_main']}; padding: 5px 10px; border-radius: 6px; }}
-            QPushButton#secondary-button:hover {{ border-color: {DARK_THEME['accent_primary']}; color: {DARK_THEME['accent_primary']}; }}
+            QFrame#stat-card {{
+                background-color: {APP_THEME['bg_content']};
+                border: 1px solid {APP_THEME['border']};
+                border-radius: 8px;
+                padding: 15px;
+            }}
+            QLabel#stat-title {{
+                color: {APP_THEME['text_secondary']};
+                font-size: 14px;
+                font-weight: 500;
+            }}
+            QLabel#stat-value {{
+                color: {APP_THEME['text_primary']};
+                font-size: 28px;
+                font-weight: 600;
+                padding-top: 5px;
+            }}
+            QFrame#panel-header {{
+                border-bottom: 1px solid {APP_THEME['border']};
+                padding: 10px;
+                background-color: {APP_THEME['bg_content']};
+                border-radius: 8px;
+            }}
+            QTableWidget {{
+                background-color: {APP_THEME['bg_content']};
+                gridline-color: {APP_THEME['border']};
+                border: 1px solid {APP_THEME['border']};
+                border-radius: 8px;
+            }}
+            QHeaderView::section {{
+                background-color: {APP_THEME['bg_main']};
+                color: {APP_THEME['text_secondary']};
+                padding: 12px;
+                border: none;
+                border-bottom: 1px solid {APP_THEME['border']};
+                font-weight: 600;
+                font-size: 13px;
+            }}
+            QTableWidget::item {{
+                padding: 12px;
+                border-bottom: 1px solid {APP_THEME['border']};
+                color: {APP_THEME['text_primary']};
+            }}
+            QPushButton.secondary-button {{
+                background-color: {APP_THEME['bg_content']};
+                color: {APP_THEME['text_secondary']};
+                border: 1px solid {APP_THEME['border']};
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-weight: 500;
+            }}
+            QPushButton.secondary-button:hover {{
+                border-color: {APP_THEME['accent_blue']};
+                color: {APP_THEME['accent_blue']};
+            }}
         """)
