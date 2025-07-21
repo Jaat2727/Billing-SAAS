@@ -1,7 +1,7 @@
 import os
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QLabel, QStackedWidget, QFileDialog, QMessageBox)
-from PyQt.QtGui import QIcon
+from PyQt6.QtGui import QIcon
 
 from src.utils.theme import DARK_THEME
 from src.controllers.main_controller import MainController
