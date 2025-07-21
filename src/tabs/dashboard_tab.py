@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from sqlalchemy import func
 from src.utils.theme import DARK_THEME
 from src.utils.database import SessionLocal
-from src.models import Invoice, CustomerCompany
+from src.models import Invoice, CustomerCompany, InvoiceItem
 
 class DashboardTab(QWidget):
     def __init__(self):
@@ -29,16 +29,17 @@ class DashboardTab(QWidget):
         stats_layout.addWidget(self.total_revenue_card)
         main_layout.addLayout(stats_layout)
 
+from src.utils.plot_canvas import PlotCanvas
+
         # Graphs and other info
         grid_layout = QGridLayout()
         grid_layout.setSpacing(20)
 
-        # Placeholder for graphs
-        invoice_trends_graph = self.create_graph_placeholder("Invoice Trends (Coming Soon)")
-        top_products_graph = self.create_graph_placeholder("Top Products (Coming Soon)")
+        self.top_products_chart = PlotCanvas(self, width=5, height=4)
+        self.invoice_stats_chart = PlotCanvas(self, width=5, height=4)
 
-        grid_layout.addWidget(invoice_trends_graph, 0, 0)
-        grid_layout.addWidget(top_products_graph, 0, 1)
+        grid_layout.addWidget(self.top_products_chart, 0, 0)
+        grid_layout.addWidget(self.invoice_stats_chart, 0, 1)
 
         main_layout.addLayout(grid_layout)
         main_layout.addStretch()
@@ -66,12 +67,39 @@ class DashboardTab(QWidget):
 
     def load_dashboard_data(self):
         total_invoices = self.db_session.query(Invoice).count()
+        paid_invoices = self.db_session.query(Invoice).filter(Invoice.payment_status == "Paid").count()
+        unpaid_invoices = total_invoices - paid_invoices
         total_companies = self.db_session.query(CustomerCompany).count()
         total_revenue = self.db_session.query(func.sum(Invoice.total_amount)).scalar() or 0
+
+        top_products = self.db_session.query(
+            InvoiceItem.product_name,
+            func.sum(InvoiceItem.quantity)
+        ).group_by(InvoiceItem.product_name).order_by(func.sum(InvoiceItem.quantity).desc()).limit(5).all()
+
+        top_companies = self.db_session.query(
+            CustomerCompany.name,
+            func.sum(Invoice.total_amount)
+        ).join(Invoice.customer).group_by(CustomerCompany.name).order_by(func.sum(Invoice.total_amount).desc()).limit(5).all()
+
 
         self.total_invoices_card.findChild(QLabel, "stat-value").setText(str(total_invoices))
         self.total_companies_card.findChild(QLabel, "stat-value").setText(str(total_companies))
         self.total_revenue_card.findChild(QLabel, "stat-value").setText(f"₹{total_revenue:,.2f}")
+
+        # Update graphs
+        self.top_products_chart.plot_bar(
+            [p[0] for p in top_products],
+            [p[1] for p in top_products],
+            "Top 5 Products by Quantity Sold",
+            "Product",
+            "Quantity Sold"
+        )
+        self.invoice_stats_chart.plot_pie(
+            [paid_invoices, unpaid_invoices],
+            ["Paid", "Unpaid"],
+            "Invoice Status"
+        )
 
     def apply_styles(self):
         self.setStyleSheet(f"""

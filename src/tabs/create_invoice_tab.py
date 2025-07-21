@@ -7,11 +7,13 @@ from src.utils.database import SessionLocal
 from src.models import CustomerCompany, Product
 from src.utils.theme import DARK_THEME
 from src.utils.pdf_service import PdfService
+from src.utils.invoice_number_service import InvoiceNumberService
 
 class CreateInvoiceTab(QWidget):
     def __init__(self):
         super().__init__()
         self.db_session = SessionLocal()
+        self.invoice_number_service = InvoiceNumberService()
         self.init_ui()
         self.apply_styles()
         self.load_initial_data()
@@ -179,7 +181,7 @@ class CreateInvoiceTab(QWidget):
         QMessageBox.information(self, "Success", f"Invoice PDF generated and saved as {file_name}")
 
     def save_invoice(self, invoice_data):
-        invoice_number = f"INV-{invoice_data['date'].strftime('%Y%m%d')}-{invoice_data['customer_id']}"
+        invoice_number = self.invoice_number_service.get_next_invoice_number()
         new_invoice = Invoice(
             invoice_number=invoice_number,
             customer_id=invoice_data['customer_id'],
