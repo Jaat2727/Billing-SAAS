@@ -21,8 +21,8 @@ class SaaSBillingApp(QMainWindow):
         self.active_nav_button = None
         self.resource_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'resources')
 
-        self.init_ui()
         self.controller = MainController(self)
+        self.init_ui()
         self.apply_styles()
 
     def init_ui(self):
