@@ -6,6 +6,7 @@ from PyQt6.QtCore import QDate
 from src.utils.database import SessionLocal
 from src.models import CustomerCompany, Product
 from src.utils.theme import DARK_THEME
+from src.utils.pdf_service import PdfService
 
 class CreateInvoiceTab(QWidget):
     def __init__(self):
@@ -130,8 +131,76 @@ class CreateInvoiceTab(QWidget):
         self.total_label.setText(f"Total Amount: ₹{total:,.2f}")
 
     def generate_invoice_pdf(self):
-        # ... PDF generation logic will go here ...
-        QMessageBox.information(self, "Success", "Invoice PDF generated and saved (placeholder).")
+        settings = self.db_session.query(UserSettings).first()
+        if not settings:
+            QMessageBox.critical(self, "Error", "Please configure your company settings first.")
+            return
+
+        customer_id = self.company_combo.itemData(self.company_combo.currentIndex())
+        if not customer_id:
+            QMessageBox.critical(self, "Error", "Please select a customer.")
+            return
+
+        customer = self.db_session.query(CustomerCompany).get(customer_id)
+
+        items = []
+        for row in range(self.items_table.rowCount()):
+            items.append({
+                "product_name": self.items_table.item(row, 0).text(),
+                "quantity": int(self.items_table.item(row, 2).text()),
+                "price_per_unit": float(self.items_table.item(row, 1).text().replace("₹", "").replace(",", ""))
+            })
+
+        if not items:
+            QMessageBox.critical(self, "Error", "Please add at least one item to the invoice.")
+            return
+
+        total_amount = sum(item['quantity'] * item['price_per_unit'] for item in items)
+
+        invoice_data = {
+            "customer_id": customer_id,
+            "vehicle_number": self.vehicle_no_input.text(),
+            "date": self.invoice_date_edit.date().toPyDate(),
+            "total_amount": total_amount,
+            "items": items,
+            "customer": {
+                "name": customer.name,
+                "address": customer.address,
+                "gstin": customer.gstin,
+                "state_code": customer.state_code
+            }
+        }
+
+        invoice = self.save_invoice(invoice_data)
+        invoice_data['invoice_number'] = invoice.invoice_number
+
+        pdf_service = PdfService(settings)
+        file_name = pdf_service.generate_invoice(invoice_data)
+        QMessageBox.information(self, "Success", f"Invoice PDF generated and saved as {file_name}")
+
+    def save_invoice(self, invoice_data):
+        invoice_number = f"INV-{invoice_data['date'].strftime('%Y%m%d')}-{invoice_data['customer_id']}"
+        new_invoice = Invoice(
+            invoice_number=invoice_number,
+            customer_id=invoice_data['customer_id'],
+            vehicle_number=invoice_data['vehicle_number'],
+            date=invoice_data['date'],
+            total_amount=invoice_data['total_amount']
+        )
+        self.db_session.add(new_invoice)
+        self.db_session.flush()
+
+        for item in invoice_data['items']:
+            new_item = InvoiceItem(
+                invoice_id=new_invoice.id,
+                product_name=item['product_name'],
+                quantity=item['quantity'],
+                price_per_unit=item['price_per_unit']
+            )
+            self.db_session.add(new_item)
+
+        self.db_session.commit()
+        return new_invoice
 
     def apply_styles(self):
         self.setStyleSheet(f"""
