@@ -1,9 +1,10 @@
 # src/tabs/dashboard_tab.py
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame, QHBoxLayout, QGridLayout
 from PyQt6.QtCore import Qt
+from sqlalchemy import func
 from src.utils.theme import DARK_THEME
 from src.utils.database import SessionLocal
-from src.models import Invoice, CustomerCompany, Product
+from src.models import Invoice, CustomerCompany
 
 class DashboardTab(QWidget):
     def __init__(self):
@@ -66,7 +67,7 @@ class DashboardTab(QWidget):
     def load_dashboard_data(self):
         total_invoices = self.db_session.query(Invoice).count()
         total_companies = self.db_session.query(CustomerCompany).count()
-        total_revenue = sum(inv.total_amount for inv in self.db_session.query(Invoice).all())
+        total_revenue = self.db_session.query(func.sum(Invoice.total_amount)).scalar() or 0
 
         self.total_invoices_card.findChild(QLabel, "stat-value").setText(str(total_invoices))
         self.total_companies_card.findChild(QLabel, "stat-value").setText(str(total_companies))

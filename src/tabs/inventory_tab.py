@@ -1,17 +1,20 @@
 # src/tabs/inventory_tab.py
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QLineEdit, QComboBox,
-                             QHeaderView, QPushButton, QMessageBox, QFrame, QLabel, QAbstractItemView)
+                             QHeaderView, QPushButton, QFrame, QLabel, QAbstractItemView)
 from PyQt6.QtCore import Qt
 from src.utils.database import SessionLocal
 from src.models import CustomerCompany, Product, Inventory, InventoryHistory
 from src.utils.dialogs import StockAdjustmentDialog
 from src.utils.theme import DARK_THEME
+from sqlalchemy.orm import joinedload
 from src.utils.helpers import log_action
+from src.utils.ui_manager import UIManager
 
 class InventoryTab(QWidget):
     def __init__(self):
         super().__init__()
         self.db_session = SessionLocal()
+        self.ui_manager = UIManager(self.db_session, self)
         self.init_ui()
         self.load_inventory_data()
         self.apply_styles()
@@ -24,9 +27,9 @@ class InventoryTab(QWidget):
         stats_frame = QFrame()
         stats_layout = QHBoxLayout(stats_frame)
         stats_layout.setSpacing(20)
-        self.total_products_card = self.create_stat_card("Total Products", "0")
-        self.low_stock_card = self.create_stat_card("Low Stock Items", "0")
-        self.out_of_stock_card = self.create_stat_card("Out of Stock", "0")
+        self.total_products_card = self.ui_manager.create_stat_card("Total Products", "0")
+        self.low_stock_card = self.ui_manager.create_stat_card("Low Stock Items", "0")
+        self.out_of_stock_card = self.ui_manager.create_stat_card("Out of Stock", "0")
         stats_layout.addWidget(self.total_products_card)
         stats_layout.addWidget(self.low_stock_card)
         stats_layout.addWidget(self.out_of_stock_card)
@@ -57,23 +60,14 @@ class InventoryTab(QWidget):
         main_layout.addWidget(controls_frame)
         main_layout.addWidget(self.inventory_table, 1)
 
-    def create_stat_card(self, title, value):
-        card = QFrame()
-        card.setObjectName("stat-card")
-        layout = QVBoxLayout(card)
-        title_label = QLabel(title)
-        title_label.setObjectName("stat-title")
-        value_label = QLabel(value)
-        value_label.setObjectName("stat-value")
-        layout.addWidget(title_label)
-        layout.addWidget(value_label)
-        return card
-
     def load_inventory_data(self):
         search_text = self.search_input.text().lower()
         stock_filter = self.stock_filter_combo.currentText()
         
-        query = self.db_session.query(Product).join(Product.company)
+        query = self.db_session.query(Product).options(
+            joinedload(Product.company),
+            joinedload(Product.inventory)
+        )
         
         if search_text:
             query = query.filter(Product.name.ilike(f"%{search_text}%") | CustomerCompany.name.ilike(f"%{search_text}%"))

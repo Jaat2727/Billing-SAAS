@@ -1,7 +1,6 @@
 # src/tabs/invoice_history_tab.py
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
-                             QHeaderView, QPushButton, QHBoxLayout, QComboBox, QLabel)
-from PyQt6.QtCore import Qt
+                             QHeaderView, QPushButton, QHBoxLayout, QComboBox)
 from src.utils.database import SessionLocal
 from src.models import Invoice
 from src.utils.theme import DARK_THEME

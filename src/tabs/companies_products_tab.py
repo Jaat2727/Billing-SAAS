@@ -1,19 +1,21 @@
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QLabel, QListWidget, QListWidgetItem,
                              QPushButton, QFrame, QStackedWidget, QTableWidget, QTableWidgetItem, QAbstractItemView,
-                             QHeaderView, QMenu, QMessageBox, QCheckBox, QLineEdit)
-from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtCore import Qt, QSize
+                             QHeaderView, QMessageBox, QCheckBox, QLineEdit)
+from PyQt6.QtCore import Qt
 from src.utils.theme import DARK_THEME
 from src.utils.database import SessionLocal
 from src.models import CustomerCompany, Product, Inventory
 from src.utils.dialogs import CompanyDialog, ProductDialog
+from sqlalchemy.orm import joinedload
 from src.utils.helpers import log_action
+from src.utils.ui_manager import UIManager
 
 class CompaniesProductsTab(QWidget):
     def __init__(self):
         super().__init__()
         self.db_session = SessionLocal()
         self.selected_company = None
+        self.ui_manager = UIManager(self.db_session, self)
         self.init_ui()
         self.load_companies()
         self.apply_styles()
@@ -115,51 +117,19 @@ class CompaniesProductsTab(QWidget):
         current_selection = self.company_list.currentItem()
         current_id = current_selection.data(Qt.ItemDataRole.UserRole) if current_selection else None
         self.company_list.clear()
-        companies = self.db_session.query(CustomerCompany).order_by(CustomerCompany.name).all()
+        companies = self.db_session.query(CustomerCompany).options(joinedload(CustomerCompany.products)).order_by(CustomerCompany.name).all()
         for company in companies:
-            item_widget = self.create_list_item_widget(company.name, company)
+            item_widget = self.ui_manager.create_list_item_widget(
+                company.name, company, self.show_edit_company_dialog, self.handle_delete_company
+            )
             list_item = QListWidgetItem(self.company_list)
             list_item.setSizeHint(item_widget.sizeHint())
             list_item.setData(Qt.ItemDataRole.UserRole, company.id)
             self.company_list.addItem(list_item)
             self.company_list.setItemWidget(list_item, item_widget)
-            if company.id == current_id: self.company_list.setCurrentItem(list_item)
+            if company.id == current_id:
+                self.company_list.setCurrentItem(list_item)
         self.update_delete_button_state()
-
-    def create_list_item_widget(self, text, entity):
-        widget = QWidget()
-        layout = QHBoxLayout(widget)
-        layout.setContentsMargins(15, 10, 15, 10)
-
-        checkbox = QCheckBox()
-        checkbox.stateChanged.connect(self.update_delete_button_state)
-
-        label = QLabel(text)
-
-        menu_btn = QPushButton("⋮")
-        menu_btn.setObjectName("menu-button")
-
-        menu = QMenu(self)
-        edit_action = QAction("Edit", menu)
-        delete_action = QAction("Delete", menu)
-
-        if isinstance(entity, CustomerCompany):
-            edit_action.triggered.connect(lambda chk, c=entity: self.show_edit_company_dialog(c))
-            delete_action.triggered.connect(lambda chk, c=entity: self.handle_delete_company(c))
-        elif isinstance(entity, Product):
-            edit_action.triggered.connect(lambda chk, p=entity: self.show_edit_product_dialog(p))
-            delete_action.triggered.connect(lambda chk, p=entity: self.handle_delete_product(p))
-
-        menu.addAction(edit_action)
-        menu.addAction(delete_action)
-        menu_btn.setMenu(menu)
-
-        layout.addWidget(checkbox)
-        layout.addWidget(label, 1)
-        layout.addWidget(menu_btn)
-
-        widget.setProperty("checkbox", checkbox)
-        return widget
 
     def on_company_selection_changed(self):
         for i in range(self.company_list.count()):
@@ -180,35 +150,14 @@ class CompaniesProductsTab(QWidget):
 
     def load_products_for_company(self):
         self.product_table.setRowCount(0)
-        if not self.selected_company: return
-        for product in sorted(self.selected_company.products, key=lambda p:p.name):
+        if not self.selected_company:
+            return
+        for product in sorted(self.selected_company.products, key=lambda p: p.name):
             row_pos = self.product_table.rowCount()
             self.product_table.insertRow(row_pos)
-
-            checkbox_widget = QWidget()
-            checkbox_layout = QHBoxLayout(checkbox_widget)
-            checkbox = QCheckBox()
-            checkbox.stateChanged.connect(self.update_delete_button_state)
-            checkbox_layout.addWidget(checkbox)
-            checkbox_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            checkbox_widget.setProperty("product_id", product.id)
-            checkbox_widget.setProperty("checkbox", checkbox)
-            self.product_table.setCellWidget(row_pos, 0, checkbox_widget)
-
-            self.product_table.setItem(row_pos, 1, QTableWidgetItem(product.name))
-            self.product_table.setItem(row_pos, 2, QTableWidgetItem(f"₹{product.price:,.2f}"))
-
-            actions_btn = QPushButton("⋮")
-            actions_btn.setObjectName("menu-button")
-            menu = QMenu(self)
-            edit_action = QAction("Edit", menu)
-            edit_action.triggered.connect(lambda chk, p=product: self.show_edit_product_dialog(p))
-            delete_action = QAction("Delete", menu)
-            delete_action.triggered.connect(lambda chk, p=product: self.handle_delete_product(p))
-            menu.addAction(edit_action)
-            menu.addAction(delete_action)
-            actions_btn.setMenu(menu)
-            self.product_table.setCellWidget(row_pos, 3, actions_btn)
+            self.ui_manager.create_product_table_row(
+                row_pos, product, self.show_edit_product_dialog, self.handle_delete_product
+            )
         self.update_delete_button_state()
 
     def get_checked_company_ids(self):

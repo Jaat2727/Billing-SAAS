@@ -1,6 +1,6 @@
 # src/tabs/settings_tab.py
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
-                             QPushButton, QGridLayout, QFrame, QMessageBox, QSpacerItem, QSizePolicy)
+                             QPushButton, QGridLayout, QFrame, QMessageBox)
 from PyQt6.QtCore import Qt
 from src.utils.theme import DARK_THEME
 from src.utils.database import SessionLocal

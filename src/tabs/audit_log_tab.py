@@ -1,7 +1,6 @@
 # src/tabs/audit_log_tab.py
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
-                             QHeaderView, QFrame, QHBoxLayout, QLabel, QAbstractItemView, QPushButton)
-from PyQt6.QtCore import Qt
+                             QHeaderView, QHBoxLayout, QLabel, QAbstractItemView, QPushButton)
 from src.utils.database import SessionLocal
 from src.models import AuditLog
 from src.utils.theme import DARK_THEME

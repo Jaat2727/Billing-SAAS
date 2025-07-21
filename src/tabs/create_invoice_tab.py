@@ -1,16 +1,11 @@
 # src/tabs/create_invoice_tab.py
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox,
                              QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QMessageBox, QDateEdit)
-from PyQt6.QtCore import Qt, QDate
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import Table, TableStyle
-from reportlab.lib import colors
+from PyQt6.QtCore import QDate
 
 from src.utils.database import SessionLocal
-from src.models import CustomerCompany, Product, Invoice, InvoiceItem, UserSettings
+from src.models import CustomerCompany, Product
 from src.utils.theme import DARK_THEME
-from src.utils.helpers import log_action
 
 class CreateInvoiceTab(QWidget):
     def __init__(self):
@@ -94,9 +89,9 @@ class CreateInvoiceTab(QWidget):
             self.company_combo.addItem(company.name, company.id)
 
         # Load states for GST
-        # This should ideally come from a helper/constants file
-        indian_states = ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"]
-        self.state_combo.addItems(indian_states)
+        from src.utils.constants import INDIAN_STATES
+        for state in INDIAN_STATES:
+            self.state_combo.addItem(state['name'], state['code'])
 
     def on_company_selected(self, index):
         company_id = self.company_combo.itemData(index)
