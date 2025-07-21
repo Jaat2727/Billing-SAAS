@@ -5,10 +5,12 @@ from src.utils.database import SessionLocal
 from src.models import AuditLog
 from src.utils.theme import DARK_THEME
 
-class AuditLogTab(QWidget):
+from src.tabs.base_tab import BaseTab
+
+class AuditLogTab(BaseTab):
     def __init__(self):
         super().__init__()
-        self.db_session = SessionLocal()
+        self.db_session = self.get_db_session()
         self.init_ui()
         self.load_logs()
         self.apply_styles()

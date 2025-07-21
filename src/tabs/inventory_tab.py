@@ -10,10 +10,12 @@ from sqlalchemy.orm import joinedload
 from src.utils.helpers import log_action
 from src.utils.ui_manager import UIManager
 
-class InventoryTab(QWidget):
+from src.tabs.base_tab import BaseTab
+
+class InventoryTab(BaseTab):
     def __init__(self):
         super().__init__()
-        self.db_session = SessionLocal()
+        self.db_session = self.get_db_session()
         self.ui_manager = UIManager(self.db_session, self)
         self.init_ui()
         self.load_inventory_data()

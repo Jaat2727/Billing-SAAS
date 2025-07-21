@@ -9,10 +9,12 @@ from src.utils.theme import DARK_THEME
 from src.utils.pdf_service import PdfService
 from src.utils.invoice_number_service import InvoiceNumberService
 
-class CreateInvoiceTab(QWidget):
+from src.tabs.base_tab import BaseTab
+
+class CreateInvoiceTab(BaseTab):
     def __init__(self):
         super().__init__()
-        self.db_session = SessionLocal()
+        self.db_session = self.get_db_session()
         self.invoice_number_service = InvoiceNumberService()
         self.init_ui()
         self.apply_styles()

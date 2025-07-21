@@ -6,10 +6,12 @@ from src.utils.theme import DARK_THEME
 from src.utils.database import SessionLocal
 from src.models import Invoice, CustomerCompany, InvoiceItem
 
-class DashboardTab(QWidget):
+from src.tabs.base_tab import BaseTab
+
+class DashboardTab(BaseTab):
     def __init__(self):
         super().__init__()
-        self.db_session = SessionLocal()
+        self.db_session = self.get_db_session()
         self.init_ui()
         self.load_dashboard_data()
         self.apply_styles()

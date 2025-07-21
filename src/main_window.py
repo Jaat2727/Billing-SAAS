@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt.QtGui import QIcon
 
 from src.utils.theme import DARK_THEME
-from src.utils.csv_manager import CsvManager
+from src.controllers.main_controller import MainController
 from src.tabs.dashboard_tab import DashboardTab
 from src.tabs.companies_products_tab import CompaniesProductsTab
 from src.tabs.create_invoice_tab import CreateInvoiceTab
@@ -20,7 +20,9 @@ class SaaSBillingApp(QMainWindow):
         self.setGeometry(100, 100, 1440, 900)
         self.active_nav_button = None
         self.resource_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '..', 'resources')
+
         self.init_ui()
+        self.controller = MainController(self)
         self.apply_styles()
 
     def init_ui(self):
@@ -48,14 +50,7 @@ class SaaSBillingApp(QMainWindow):
         self.companies_tab_instance = CompaniesProductsTab()
         self.inventory_tab_instance = InventoryTab()
         self.audit_log_tab_instance = AuditLogTab()
-        
         self.invoice_history_tab_instance = InvoiceHistoryTab()
-        self.csv_manager = CsvManager(
-            self.companies_tab_instance,
-            self.inventory_tab_instance,
-            self.audit_log_tab_instance,
-            self.invoice_history_tab_instance
-        )
 
         self.tabs_map = {
             "Dashboard": DashboardTab(),
@@ -90,12 +85,12 @@ class SaaSBillingApp(QMainWindow):
         
         import_btn = QPushButton("Import")
         import_btn.setObjectName("header-button")
-        import_btn.clicked.connect(self.handle_import_csv)
+        import_btn.clicked.connect(self.controller.handle_import_csv)
         header_layout.addWidget(import_btn)
 
         export_btn = QPushButton("Export")
         export_btn.setObjectName("header-button")
-        export_btn.clicked.connect(self.handle_export_csv)
+        export_btn.clicked.connect(self.controller.handle_export_csv)
         header_layout.addWidget(export_btn)
         
         quick_invoice_btn = QPushButton("+ Quick Invoice")
@@ -104,50 +99,6 @@ class SaaSBillingApp(QMainWindow):
         header_layout.addWidget(quick_invoice_btn)
         
         return header_widget
-
-    def handle_import_csv(self):
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
-        dialog.setNameFilter("CSV Files (*.csv)")
-        dialog.setViewMode(QFileDialog.ViewMode.Detail)
-        if dialog.exec():
-            file_name = dialog.selectedFiles()[0]
-            if "companies" in file_name.lower() or "products" in file_name.lower():
-                import_type = "companies_and_products"
-            elif "invoice" in file_name.lower():
-                import_type = "invoices"
-            else:
-                QMessageBox.critical(self, "Import Error", "Could not determine import type from file name.")
-                return
-
-            success, message = self.csv_manager.handle_import_csv(file_name, import_type)
-            if success:
-                QMessageBox.information(self, "Success", message)
-            else:
-                QMessageBox.critical(self, "Import Error", message)
-
-    def handle_export_csv(self):
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
-        dialog.setNameFilter("CSV Files (*.csv)")
-        dialog.setDefaultSuffix("csv")
-        dialog.setViewMode(QFileDialog.ViewMode.Detail)
-        if dialog.exec():
-            file_name = dialog.selectedFiles()[0]
-            if "companies" in file_name.lower() or "products" in file_name.lower():
-                export_type = "companies_and_products"
-            elif "invoice" in file_name.lower():
-                export_type = "invoices"
-            else:
-                # Default to companies and products if not specified
-                export_type = "companies_and_products"
-
-            success, message = self.csv_manager.handle_export_csv(file_name, export_type)
-            if success:
-                QMessageBox.information(self, "Success", message)
-            else:
-                QMessageBox.critical(self, "Export Error", message)
             
     def create_nav_sidebar(self):
         nav_widget = QWidget()
@@ -194,14 +145,7 @@ class SaaSBillingApp(QMainWindow):
         return button
 
     def switch_page(self, name, button):
-        if self.active_nav_button:
-            self.active_nav_button.setChecked(False)
-        button.setChecked(True)
-        self.active_nav_button = button
-        
-        self.stacked_widget.setCurrentWidget(self.tabs_map[name])
-        self.header_title.setText(name)
-        self.header_subtitle.setText(f"Manage your {name.lower()}")
+        self.controller.switch_page(name, button)
 
     def apply_styles(self):
         self.setStyleSheet(f"""

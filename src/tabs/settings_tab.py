@@ -7,10 +7,12 @@ from src.utils.database import SessionLocal
 from src.models.user import UserSettings
 from src.utils.helpers import log_action
 
-class SettingsTab(QWidget):
+from src.tabs.base_tab import BaseTab
+
+class SettingsTab(BaseTab):
     def __init__(self):
         super().__init__()
-        self.db_session = SessionLocal()
+        self.db_session = self.get_db_session()
         self.init_ui()
         self.load_settings()
         self.apply_styles()
