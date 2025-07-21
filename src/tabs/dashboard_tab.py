@@ -31,8 +31,6 @@ class DashboardTab(BaseTab):
         stats_layout.addWidget(self.total_revenue_card)
         main_layout.addLayout(stats_layout)
 
-from src.utils.plot_canvas import PlotCanvas
-
         # Graphs and other info
         grid_layout = QGridLayout()
         grid_layout.setSpacing(20)
