@@ -1,6 +1,7 @@
 # src/utils/ui_manager.py
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QPushButton, QMenu, QTableWidgetItem, QFrame)
-from PyQt.QtGui import QAction
+from PyQt6.QtGui import QAction
+from PyQt6.QtCore import Qt
 
 class UIManager:
     def __init__(self, db_session, parent):
@@ -56,7 +57,7 @@ class UIManager:
         checkbox = QCheckBox()
         checkbox.stateChanged.connect(self.parent.update_delete_button_state)
         checkbox_layout.addWidget(checkbox)
-        checkbox_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        checkbox_layout.setAlignment(Qt.AlignCenter)
         checkbox_widget.setProperty("product_id", product.id)
         checkbox_widget.setProperty("checkbox", checkbox)
         self.parent.product_table.setCellWidget(row_pos, 0, checkbox_widget)

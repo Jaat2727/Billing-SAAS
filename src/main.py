@@ -3,6 +3,9 @@ import os
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QFontDatabase
 
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from src.utils.database import Base, engine, SessionLocal
 from src.main_window import SaaSBillingApp
 from src.models import UserSettings # We only need one for the default check
@@ -20,16 +23,20 @@ def initialize_database():
     db.close()
 
 def main():
-    initialize_database()
-    app = QApplication(sys.argv)
-    
-    resource_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'resources')
-    QFontDatabase.addApplicationFont(os.path.join(resource_path, "Roboto-Regular.ttf"))
-    QFontDatabase.addApplicationFont(os.path.join(resource_path, "Roboto-Medium.ttf"))
-    
-    window = SaaSBillingApp()
-    window.show()
-    sys.exit(app.exec())
+    try:
+        initialize_database()
+        app = QApplication(sys.argv)
+
+        resource_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'resources')
+        QFontDatabase.addApplicationFont(os.path.join(resource_path, "Roboto-Regular.ttf"))
+        QFontDatabase.addApplicationFont(os.path.join(resource_path, "Roboto-Medium.ttf"))
+
+        window = SaaSBillingApp()
+        window.show()
+        sys.exit(app.exec())
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

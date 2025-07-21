@@ -6,7 +6,7 @@ from src.utils.theme import DARK_THEME
 from src.utils.database import SessionLocal
 from src.models.user import UserSettings
 from src.utils.helpers import log_action
-
+import re
 from src.tabs.base_tab import BaseTab
 
 class SettingsTab(BaseTab):
@@ -110,8 +110,6 @@ class SettingsTab(BaseTab):
             self.email_input.setText(settings.email or "")
             self.upi_id_input.setText(settings.upi_id or "")
             self.tagline_input.setText(settings.tagline or "")
-
-import re
 
     def save_settings(self):
         gstin = self.gstin_input.text()
