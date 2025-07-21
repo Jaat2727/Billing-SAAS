@@ -23,6 +23,7 @@ class SaaSBillingApp(QMainWindow):
 
         self.controller = MainController(self)
         self.init_ui()
+        self.controller.initialize_csv_manager()  # Initialize after UI is ready
         self.apply_styles()
 
     def init_ui(self):

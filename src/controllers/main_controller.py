@@ -5,12 +5,18 @@ from src.utils.csv_manager import CsvManager
 class MainController:
     def __init__(self, main_view):
         self.main_view = main_view
-        self.csv_manager = CsvManager(
-            self.main_view.companies_tab_instance,
-            self.main_view.inventory_tab_instance,
-            self.main_view.audit_log_tab_instance,
-            self.main_view.invoice_history_tab_instance
-        )
+        # Defer initialization of CsvManager until after the UI is fully set up.
+        self.csv_manager = None
+
+    def initialize_csv_manager(self):
+        """Initializes the CsvManager with all required tab instances."""
+        if not self.csv_manager:
+            self.csv_manager = CsvManager(
+                companies_tab=self.main_view.companies_tab_instance,
+                inventory_tab=self.main_view.inventory_tab_instance,
+                audit_log_tab=self.main_view.audit_log_tab_instance,
+                invoice_history_tab=self.main_view.invoice_history_tab_instance
+            )
 
     def switch_page(self, name, button):
         if self.main_view.active_nav_button:
