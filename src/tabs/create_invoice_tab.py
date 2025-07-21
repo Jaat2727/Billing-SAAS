@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdi
 from PyQt6.QtCore import QDate
 
 from src.utils.database import SessionLocal
-from src.models import CustomerCompany, Product
+from src.models import CustomerCompany, Product, Invoice, InvoiceItem, UserSettings, InventoryHistory
 from src.utils.theme import DARK_THEME
 from src.utils.pdf_service import PdfService
 from src.utils.invoice_number_service import InvoiceNumberService
@@ -193,6 +193,20 @@ class CreateInvoiceTab(QWidget):
         self.db_session.flush()
 
         for item in invoice_data['items']:
+            product = self.db_session.query(Product).filter(Product.name == item['product_name']).first()
+            if product:
+                if product.inventory.stock_quantity < item['quantity']:
+                    QMessageBox.critical(self, "Error", f"Insufficient stock for {product.name}.")
+                    return None
+                product.inventory.stock_quantity -= item['quantity']
+                history_entry = InventoryHistory(
+                    product_id=product.id,
+                    change_quantity=-item['quantity'],
+                    reason=f"Invoice {invoice_number}",
+                    new_quantity=product.inventory.stock_quantity
+                )
+                self.db_session.add(history_entry)
+
             new_item = InvoiceItem(
                 invoice_id=new_invoice.id,
                 product_name=item['product_name'],

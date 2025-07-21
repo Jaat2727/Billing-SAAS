@@ -49,10 +49,12 @@ class SaaSBillingApp(QMainWindow):
         self.inventory_tab_instance = InventoryTab()
         self.audit_log_tab_instance = AuditLogTab()
         
+        self.invoice_history_tab_instance = InvoiceHistoryTab()
         self.csv_manager = CsvManager(
             self.companies_tab_instance,
             self.inventory_tab_instance,
-            self.audit_log_tab_instance
+            self.audit_log_tab_instance,
+            self.invoice_history_tab_instance
         )
 
         self.tabs_map = {
@@ -104,24 +106,48 @@ class SaaSBillingApp(QMainWindow):
         return header_widget
 
     def handle_import_csv(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Import Companies & Products", "", "CSV Files (*.csv)")
-        if not file_name:
-            return
-        success, message = self.csv_manager.handle_import_csv(file_name)
-        if success:
-            QMessageBox.information(self, "Success", message)
-        else:
-            QMessageBox.critical(self, "Import Error", message)
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        dialog.setNameFilter("CSV Files (*.csv)")
+        dialog.setViewMode(QFileDialog.ViewMode.Detail)
+        if dialog.exec():
+            file_name = dialog.selectedFiles()[0]
+            if "companies" in file_name.lower() or "products" in file_name.lower():
+                import_type = "companies_and_products"
+            elif "invoice" in file_name.lower():
+                import_type = "invoices"
+            else:
+                QMessageBox.critical(self, "Import Error", "Could not determine import type from file name.")
+                return
+
+            success, message = self.csv_manager.handle_import_csv(file_name, import_type)
+            if success:
+                QMessageBox.information(self, "Success", message)
+            else:
+                QMessageBox.critical(self, "Import Error", message)
 
     def handle_export_csv(self):
-        file_name, _ = QFileDialog.getSaveFileName(self, "Export Companies & Products", "companies_products_backup.csv", "CSV Files (*.csv)")
-        if not file_name:
-            return
-        success, message = self.csv_manager.handle_export_csv(file_name)
-        if success:
-            QMessageBox.information(self, "Success", message)
-        else:
-            QMessageBox.critical(self, "Export Error", message)
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.FileMode.AnyFile)
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        dialog.setNameFilter("CSV Files (*.csv)")
+        dialog.setDefaultSuffix("csv")
+        dialog.setViewMode(QFileDialog.ViewMode.Detail)
+        if dialog.exec():
+            file_name = dialog.selectedFiles()[0]
+            if "companies" in file_name.lower() or "products" in file_name.lower():
+                export_type = "companies_and_products"
+            elif "invoice" in file_name.lower():
+                export_type = "invoices"
+            else:
+                # Default to companies and products if not specified
+                export_type = "companies_and_products"
+
+            success, message = self.csv_manager.handle_export_csv(file_name, export_type)
+            if success:
+                QMessageBox.information(self, "Success", message)
+            else:
+                QMessageBox.critical(self, "Export Error", message)
             
     def create_nav_sidebar(self):
         nav_widget = QWidget()

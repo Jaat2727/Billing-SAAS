@@ -109,13 +109,26 @@ class SettingsTab(QWidget):
             self.upi_id_input.setText(settings.upi_id or "")
             self.tagline_input.setText(settings.tagline or "")
 
+import re
+
     def save_settings(self):
+        gstin = self.gstin_input.text()
+        pan = self.pan_input.text()
+
+        if gstin and not re.match(r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$", gstin):
+            QMessageBox.critical(self, "Error", "Invalid GSTIN format.")
+            return
+
+        if pan and not re.match(r"^[A-Z]{5}[0-9]{4}[A-Z]{1}$", pan):
+            QMessageBox.critical(self, "Error", "Invalid PAN format.")
+            return
+
         settings = self.db_session.query(UserSettings).first()
         if settings:
             details = "Updated company settings."
             settings.company_name = self.company_name_input.text()
-            settings.gstin = self.gstin_input.text()
-            settings.pan_number = self.pan_input.text()
+            settings.gstin = gstin
+            settings.pan_number = pan
             settings.address = self.address_input.text()
             settings.mobile_number = self.mobile_input.text()
             settings.email = self.email_input.text()

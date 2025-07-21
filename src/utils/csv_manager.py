@@ -6,13 +6,28 @@ from .database import SessionLocal
 from .helpers import log_action
 from src.models import CustomerCompany, Product, Inventory
 
+from src.models import Invoice, InvoiceItem
+
 class CsvManager:
-    def __init__(self, companies_tab, inventory_tab, audit_log_tab):
+    def __init__(self, companies_tab, inventory_tab, audit_log_tab, invoice_history_tab):
         self.companies_tab = companies_tab
         self.inventory_tab = inventory_tab
         self.audit_log_tab = audit_log_tab
+        self.invoice_history_tab = invoice_history_tab
 
-    def handle_import_csv(self, file_name):
+    def handle_import_csv(self, file_name, import_type):
+        if import_type == "companies_and_products":
+            return self.import_companies_and_products(file_name)
+        elif import_type == "invoices":
+            return self.import_invoices(file_name)
+
+    def handle_export_csv(self, file_name, export_type):
+        if export_type == "companies_and_products":
+            return self.export_companies_and_products(file_name)
+        elif export_type == "invoices":
+            return self.export_invoices(file_name)
+
+    def import_companies_and_products(self, file_name):
         try:
             with SessionLocal() as db_session:
                 companies_cache = {c.name: c for c in db_session.query(CustomerCompany).all()}
@@ -80,6 +95,63 @@ class CsvManager:
             return True, "Data exported successfully!"
         except Exception as e:
             return False, f"An error occurred during export:\n{e}"
+
+    def import_invoices(self, file_name):
+        try:
+            with SessionLocal() as db_session:
+                with open(file_name, mode='r', encoding='utf-8-sig') as infile:
+                    reader = csv.DictReader(infile)
+                    for row in reader:
+                        # This is a simplified import process. A real-world application
+                        # would need more robust error handling and data validation.
+                        customer = db_session.query(CustomerCompany).filter(CustomerCompany.name == row['CustomerName']).first()
+                        if customer:
+                            invoice = Invoice(
+                                invoice_number=row['InvoiceNumber'],
+                                customer_id=customer.id,
+                                vehicle_number=row['VehicleNumber'],
+                                date=row['Date'],
+                                total_amount=row['TotalAmount']
+                            )
+                            db_session.add(invoice)
+                            db_session.flush()
+
+                            # Assuming items are in a separate file or a more complex format
+                            # For simplicity, we are not importing items here.
+
+                log_action(db_session, "IMPORT", "System", None, f"Imported invoices from CSV file: {os.path.basename(file_name)}.")
+                db_session.commit()
+
+            self.invoice_history_tab.load_invoices()
+            self.audit_log_tab.load_logs()
+            return True, "Invoices imported successfully!"
+        except Exception as e:
+            return False, f"An error occurred during invoice import:\n{e}"
+
+    def export_invoices(self, file_name):
+        try:
+            with SessionLocal() as db_session:
+                invoices = db_session.query(Invoice).order_by(Invoice.date.desc()).all()
+                with open(file_name, mode='w', newline='', encoding='utf-8') as outfile:
+                    writer = csv.writer(outfile)
+                    writer.writerow(['InvoiceNumber', 'CustomerName', 'Date', 'VehicleNumber', 'TotalAmount'])
+
+                    for invoice in invoices:
+                        writer.writerow([
+                            invoice.invoice_number,
+                            invoice.customer.name,
+                            invoice.date,
+                            invoice.vehicle_number,
+                            invoice.total_amount
+                        ])
+
+                log_action(db_session, "EXPORT", "System", None, f"Exported invoices to CSV file: {os.path.basename(file_name)}.")
+                db_session.commit()
+
+            self.audit_log_tab.load_logs()
+            return True, "Invoices exported successfully!"
+        except Exception as e:
+            return False, f"An error occurred during invoice export:\n{e}"
 
     def _parse_state(self, state_raw):
         match = re.search(r"(.+?)\s*\(Code:\s*(\d+)\)", state_raw)

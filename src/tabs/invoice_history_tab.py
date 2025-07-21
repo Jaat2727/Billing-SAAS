@@ -1,9 +1,10 @@
 # src/tabs/invoice_history_tab.py
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
-                             QHeaderView, QPushButton, QHBoxLayout, QComboBox)
+                             QHeaderView, QPushButton, QHBoxLayout, QComboBox, QMessageBox)
 from src.utils.database import SessionLocal
-from src.models import Invoice
+from src.models import Invoice, UserSettings
 from src.utils.theme import DARK_THEME
+from src.utils.pdf_service import PdfService
 
 class InvoiceHistoryTab(QWidget):
     def __init__(self):
@@ -45,11 +46,82 @@ class InvoiceHistoryTab(QWidget):
             actions_widget = QWidget()
             actions_layout = QHBoxLayout(actions_widget)
             download_btn = QPushButton("Download PDF")
+            download_btn.clicked.connect(lambda chk, inv=inv: self.redownload_invoice(inv))
             share_btn = QPushButton("Share")
+            share_btn.clicked.connect(lambda chk, inv=inv: self.share_invoice(inv))
             actions_layout.addWidget(download_btn)
             actions_layout.addWidget(share_btn)
             actions_layout.setContentsMargins(0,0,0,0)
             self.invoice_table.setCellWidget(row, 5, actions_widget)
+
+    def redownload_invoice(self, invoice):
+        settings = self.db_session.query(UserSettings).first()
+        if not settings:
+            QMessageBox.critical(self, "Error", "Please configure your company settings first.")
+            return
+
+        items = []
+        for item in invoice.items:
+            items.append({
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "price_per_unit": item.price_per_unit
+            })
+
+        invoice_data = {
+            "invoice_number": invoice.invoice_number,
+            "date": invoice.date.strftime("%Y-%m-%d"),
+            "vehicle_number": invoice.vehicle_number,
+            "customer": {
+                "name": invoice.customer.name,
+                "address": invoice.customer.address,
+                "gstin": invoice.customer.gstin,
+                "state_code": invoice.customer.state_code
+            },
+            "items": items
+        }
+
+        pdf_service = PdfService(settings)
+        file_name = pdf_service.generate_invoice(invoice_data)
+        QMessageBox.information(self, "Success", f"Invoice PDF re-downloaded and saved as {file_name}")
+
+    def share_invoice(self, invoice):
+        settings = self.db_session.query(UserSettings).first()
+        if not settings:
+            QMessageBox.critical(self, "Error", "Please configure your company settings first.")
+            return
+
+        items = []
+        for item in invoice.items:
+            items.append({
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "price_per_unit": item.price_per_unit
+            })
+
+        invoice_data = {
+            "invoice_number": invoice.invoice_number,
+            "date": invoice.date.strftime("%Y-%m-%d"),
+            "vehicle_number": invoice.vehicle_number,
+            "customer": {
+                "name": invoice.customer.name,
+                "address": invoice.customer.address,
+                "gstin": invoice.customer.gstin,
+                "state_code": invoice.customer.state_code
+            },
+            "items": items
+        }
+
+        pdf_service = PdfService(settings)
+        file_name = pdf_service.generate_invoice(invoice_data)
+
+        try:
+            from PyQt6.QtGui import QDesktopServices
+            from PyQt6.QtCore import QUrl
+            QDesktopServices.openUrl(QUrl.fromLocalFile(file_name))
+        except ImportError:
+            QMessageBox.critical(self, "Error", "Could not open file. PySide6 is required for this feature.")
+
 
     def apply_styles(self):
         self.setStyleSheet(f"""
